@@ -1,0 +1,25 @@
+{
+  "name": "electron-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . ",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+    
+  },
+  "build": {
+    "appId": "your.id"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^9.1.0"
+  },
+  "dependencies": {
+    "chromedriver": "^83.0.1",
+    "electron-chromedriver": "^9.0.0",
+    "selenium-webdriver": "^4.0.0-alpha.7"
+  }
+}
