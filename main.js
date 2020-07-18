@@ -1,8 +1,32 @@
-const { app, BrowserWindow } = require('electron') 
-  
+const { app, BrowserWindow, Menu, ipcMain } = require('electron') 
+ 
+let win = null;
+let menuTemplate = [
+  {
+      label: 'Файл',
+      submenu: [
+        {
+          label: 'Загрузить данный из файла',
+          click () 
+          {
+              win.webContents.send('menu', 'read-file');
+          }
+        },
+        {type:'separator'},  
+        {
+            label:'Выход', 
+            click() { 
+                app.quit();
+            } 
+        }
+      ]
+  },
+];
+
+
 function createWindow () { 
   // Create the browser window. 
-  const win = new BrowserWindow({ 
+  win = new BrowserWindow({ 
     width: 800, 
     height: 600, 
     webPreferences: { 
@@ -21,7 +45,7 @@ function createWindow () {
 // initialization and is ready to create browser windows. 
 // Some APIs can only be used after this event occurs. 
 // This method is equivalent to 'app.on('ready', function())' 
-app.whenReady().then(createWindow) 
+app.whenReady().then(createWindow);
   
 // Quit when all windows are closed. 
 app.on('window-all-closed', () => { 
@@ -30,16 +54,24 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') { 
     app.quit() 
   } 
-}) 
+});
   
 app.on('activate', () => { 
   // On macOS it's common to re-create a window in the   
   // app when the dock icon is clicked and there are no  
   // other windows open. 
   if (BrowserWindow.getAllWindows().length === 0) { 
-    createWindow() 
+    createWindow(); 
   } 
-}) 
+});
+
+app.on('ready', () => { 
+
+  let menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
+
+});
+
   
 // In this file, you can include the rest of your  
 // app's specific main process code. You can also  

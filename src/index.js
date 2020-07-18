@@ -1,21 +1,17 @@
 const electron = require("electron");
-const path = require("path");
-
-// Importing dialog module using remote
-const dialog = electron.remote.dialog;
+const ipcRenderer = require('electron').ipcRenderer;
 
 var uploadFile = document.getElementById("upload");
-
+var inns = document.getElementById("inns");
 // Defining a Global file path Variable to store
 // user-selected file
 global.filepath = undefined;
-uploadFile.addEventListener("click", () => {
-  // If the platform is 'win32' or 'Linux'
-  // Resolves to a Promise<Object>
-  dialog
-    .showOpenDialog({
+
+ipcRenderer.on('menu', function(event, message) {
+  if (message === 'read-file'){
+    dialog.showOpenDialog({
       title: "Select the File to be uploaded",
- //     defaultPath: path.join(__dirname, "../assets/"),
+      // defaultPath: path.join(__dirname, "../assets/"),
       buttonLabel: "Upload",
       // Restricting the user to only Text Files.
       filters: [
@@ -43,6 +39,8 @@ uploadFile.addEventListener("click", () => {
             data
           ) {
             if (!err) {
+
+              inns.value = data;
               console.log("received data: " + data);
             } else {
               console.log(err);
@@ -54,4 +52,15 @@ uploadFile.addEventListener("click", () => {
     .catch((err) => {
       console.log(err);
     });
+  }
+});
+// Importing dialog module using remote
+const dialog = electron.remote.dialog;
+
+
+
+uploadFile.addEventListener("click", () => {
+  // If the platform is 'win32' or 'Linux'
+  // Resolves to a Promise<Object>
+  
 });

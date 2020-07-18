@@ -5,9 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron . ",
-    "pack": "electron-builder --dir",
+    "pack": "electron-packager .",
     "dist": "electron-builder"
-    
   },
   "build": {
     "appId": "your.id"

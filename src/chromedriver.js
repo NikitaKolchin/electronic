@@ -7,17 +7,18 @@ const {Builder, By, Key, until} = require('selenium-webdriver');
     try {
         
         // Navigate to Url
-        await driver.get('https://www.google.com');
-
+        await driver.get('https://egrul.nalog.ru/index.html');
+        let b = await driver.findElement(By.id('uni_text_0'));
         // Enter text "cheese" and perform keyboard action "Enter"
-        await driver.findElement(By.name('q')).sendKeys('cheese', Key.ENTER);
-
-        let firstResult = await driver.wait(until.elementLocated(By.css('h3>div')), 10000);
-
-        console.log(await firstResult.getAttribute('textContent'));
+        await (await driver.findElement(By.id('uni_text_0'))).click();
+        
+        await driver.findElement(By.name('query')).sendKeys('5258101316', Key.ENTER);
+        await driver.wait(until.elementLocated(By.className('op-excerpt')), 3000);
+    
+        await (await driver.findElement(By.className('op-excerpt'))).click();
     }
     finally{
-        driver.quit();
+      //  driver.quit();
     }
 })();
   
