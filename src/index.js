@@ -1,66 +1,79 @@
 const electron = require("electron");
-const ipcRenderer = require('electron').ipcRenderer;
+const ipcRenderer = require("electron").ipcRenderer;
+const { Builder, By, Key, until } = require("selenium-webdriver");
 
-var uploadFile = document.getElementById("upload");
+var handleFile = document.getElementById("handle");
 var inns = document.getElementById("inns");
 // Defining a Global file path Variable to store
 // user-selected file
 global.filepath = undefined;
-
-ipcRenderer.on('menu', function(event, message) {
-  if (message === 'read-file'){
-    dialog.showOpenDialog({
-      title: "Select the File to be uploaded",
-      // defaultPath: path.join(__dirname, "../assets/"),
-      buttonLabel: "Upload",
-      // Restricting the user to only Text Files.
-      filters: [
-        {
-          name: "Text Files",
-          extensions: ["csv"],
-        },
-      ],
-      // Specifying the File Selector Property
-      properties: ["openFile"],
-    })
-    .then((file) => {
-      // Stating whether dialog operation was
-      // cancelled or not.
-      console.log(file.canceled);
-      if (!file.canceled) {
-        // Updating the GLOBAL filepath variable
-        // to user-selected file.
-        global.filepath = file.filePaths[0].toString();
-        console.log(global.filepath);
-        const fs = require("fs");
-        if (global.filepath && !file.canceled) {
-          fs.readFile(global.filepath, { encoding: "utf-8" }, function (
-            err,
-            data
-          ) {
-            if (!err) {
-
-              inns.value = data;
-              console.log("received data: " + data);
-            } else {
-              console.log(err);
-            }
-          });
-        }
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-  }
-});
 // Importing dialog module using remote
 const dialog = electron.remote.dialog;
 
+ipcRenderer.on("menu", function (event, message) {
+  if (message === "read-file") {
+    dialog
+      .showOpenDialog({
+        title: "Select the File to be uploaded",
+        // defaultPath: path.join(__dirname, "../assets/"),
+        buttonLabel: "Upload",
+        // Restricting the user to only Text Files.
+        filters: [
+          {
+            name: "Text Files",
+            extensions: ["csv"],
+          },
+        ],
+        // Specifying the File Selector Property
+        properties: ["openFile"],
+      })
+      .then((file) => {
+        // Stating whether dialog operation was
+        // cancelled or not.
+        console.log(file.canceled);
+        if (!file.canceled) {
+          // Updating the GLOBAL filepath variable
+          // to user-selected file.
+          global.filepath = file.filePaths[0].toString();
+          console.log(global.filepath);
+          const fs = require("fs");
+          if (global.filepath && !file.canceled) {
+            fs.readFile(global.filepath, { encoding: "utf-8" }, function (
+              err,
+              data
+            ) {
+              if (!err) {
+                inns.value = data;
+                console.log("received data: " + data);
+              } else {
+                console.log(err);
+              }
+            });
+          }
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+});
 
-
-uploadFile.addEventListener("click", () => {
+handleFile.addEventListener("click", async () => {
   // If the platform is 'win32' or 'Linux'
   // Resolves to a Promise<Object>
-  
+  require("chromedriver");
+
+  let driver = await new Builder().forBrowser("chrome").build(); //1001241307
+  let inn_arr = inns.value.split("\n");
+  driver.get("https://egrul.nalog.ru/index.html");
+   inn_arr.forEach(async (element) => {
+
+    await driver.findElement(By.id('uni_text_0'));
+    await (await driver.findElement(By.id('uni_text_0'))).click();
+    
+    await driver.findElement(By.name('query')).sendKeys(element, Key.ENTER);
+    await driver.wait(until.elementLocated(By.className('op-excerpt')), 3000);
+
+    await (await driver.findElement(By.className('op-excerpt'))).click();
+  });
 });
