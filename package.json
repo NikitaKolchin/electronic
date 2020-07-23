@@ -16,5 +16,7 @@
   "devDependencies": {
     "electron": "^9.1.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "pdf2json": "^1.2.0"
+  }
 }

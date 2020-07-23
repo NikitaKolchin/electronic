@@ -1,6 +1,11 @@
 const electron = require("electron");
 const ipcRenderer = require("electron").ipcRenderer;
 
+let fs = require("fs"),
+  PDFParser = require("pdf2json");
+
+let pdfParser = new PDFParser();
+
 var handleFile = document.getElementById("handle");
 var inns = document.getElementById("inns");
 // Defining a Global file path Variable to store
@@ -58,6 +63,10 @@ ipcRenderer.on("menu", function (event, message) {
 });
 
 handleFile.addEventListener("click", () => {
+  downloadFromEgrul(inns);
+});
+
+const downloadFromEgrul = (inn) => {
   var myHeaders = new Headers();
   myHeaders.append("Accept", "application/json, text/javascript, */*; q=0.01");
   myHeaders.append("Accept-Encoding", "gzip, deflate, br");
@@ -70,7 +79,9 @@ handleFile.addEventListener("click", () => {
   myHeaders.append("Referer", "https://egrul.nalog.ru/index.html");
 
   var raw =
-    "vyp3CaptchaToken=&page=&query=1202004842&region=&PreventChromeAutocomplete=";
+    "vyp3CaptchaToken=&page=&query=" +
+    inn.value +
+    "&region=&PreventChromeAutocomplete=";
 
   var requestOptions = {
     method: "POST",
@@ -83,49 +94,45 @@ handleFile.addEventListener("click", () => {
     .then((result) => {
       let token1 = JSON.parse(result).t;
       console.log(token1);
-      fetch(
-        "https://egrul.nalog.ru/search-result/"+token1,
-        {method:"GET"},
-      )
+      fetch("https://egrul.nalog.ru/search-result/" + token1, { method: "GET" })
         .then((response) => response.text())
         .then((result) => {
-          let token2 = JSON.parse(result)['rows'][0].t;
+          let token2 = JSON.parse(result)["rows"][0].t;
           console.log(token2);
-          fetch(
-            "https://egrul.nalog.ru/vyp-request/"+token2,
-            {method:"GET"},
-          )
+          fetch("https://egrul.nalog.ru/vyp-request/" + token2, {
+            method: "GET",
+          })
             .then((response) => response.text())
             .then((result) => {
-            let token3 = JSON.parse(result).t;
-            console.log(token3);
-            fetch(
-              "https://egrul.nalog.ru/vyp-status/"+token3,
-              {method:"GET"},
-            )
-              .then((response) => response.text())
-              .then((result) => {
-              console.log(JSON.parse(result).status);
-              if(JSON.parse(result).status === "ready"){
-                fetch(
-                  "https://egrul.nalog.ru/vyp-download/"+token3,
-                  {method:"GET"},
-                )
+              let token3 = JSON.parse(result).t;
+              let rs;
+              console.log(token3);
+              do {
+                fetch("https://egrul.nalog.ru/vyp-status/" + token3, {
+                  method: "GET",
+                })
                   .then((response) => response.text())
-                  .then((result) => {
-                  console.log(result); 
-                  }) 
+                  .then((result_status) => {
+                    rs = JSON.parse(result_status).status;
+                    console.log(rs);
+                    fetch("https://egrul.nalog.ru/vyp-download/" + token3, {
+                      method: "GET",
+                    })
+                      .then((response) => response.arrayBuffer())
+                      .then((result) =>
+                        fs.writeFileSync(token3 + ".pdf", new Buffer(result))
+                      )
+                      .catch((error) => console.log("error", error));
+                  })
                   .catch((error) => console.log("error", error));
-              }   
-              }) 
-              .catch((error) => console.log("error", error));
-            }) 
+              } while (rs === "ready");
+            })
             .catch((error) => console.log("error", error));
-        })  
+        })
         .catch((error) => console.log("error", error));
     })
     .catch((error) => console.log("error", error));
-});
+};
 
 // handleFile.addEventListener("click", async () => {
 //   // If the platform is 'win32' or 'Linux'
