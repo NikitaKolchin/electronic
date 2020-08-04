@@ -65,15 +65,16 @@ ipcRenderer.on("menu", function (event, message) {
 handleFile.addEventListener("click", async () => {
   let inn_arr = inns.value.split("\n");
   for (const item of inn_arr) {
-    await delay(1000);
-    await downloadFromEgrul(item); 
+    if (item.length === 10) {
+      await delay(1000);
+      await downloadFromEgrul(item);
+    }
   }
 });
 
 function delay(sec) {
-  return new Promise(resolve => setTimeout(resolve, sec));
+  return new Promise((resolve) => setTimeout(resolve, sec));
 }
-
 
 const downloadFromEgrul = async (inn) => {
   var myHeaders1 = new Headers();
@@ -106,10 +107,9 @@ const downloadFromEgrul = async (inn) => {
       let result1 = await response1.text();
       token1 = JSON.parse(result1).t;
       console.log("token1 = " + token1);
-    } else 
-    {
+    } else {
       console.log("HTTP error 1: " + response1.status);
-    } 
+    }
 
     await delay(1000);
 
@@ -137,7 +137,8 @@ const downloadFromEgrul = async (inn) => {
 
     await delay(1000);
 
-    while (rs !== "ready") {  // обработать когда последняя строчка пусатя
+    while (rs !== "ready") {
+      // обработать когда последняя строчка пусатя
       let response4 = await fetch(
         "https://egrul.nalog.ru/vyp-status/" + token3,
         { method: "GET" }
@@ -147,7 +148,7 @@ const downloadFromEgrul = async (inn) => {
         rs = JSON.parse(result4).status;
         console.log("result status = " + rs);
       } else console.log("HTTP error 4: " + response2.status);
-    } 
+    }
 
     await delay(1000);
 
@@ -157,14 +158,13 @@ const downloadFromEgrul = async (inn) => {
     );
     if (response5.ok) {
       let result5 = await response5.arrayBuffer();
-      fs.writeFileSync("./pdf/"+token3 + ".pdf", new Buffer(result5));
+      fs.writeFileSync("./pdf/" + token3 + ".pdf", new Buffer(result5));
       console.log("fileName = " + token3);
     } else console.log("HTTP error 5: " + response2.status);
   } catch (error) {
     console.log("error", error);
   }
 };
-
 
 // const downloadFromEgrul = (inn) => {
 //   var myHeaders = new Headers();
