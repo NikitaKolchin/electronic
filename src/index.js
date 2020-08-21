@@ -67,7 +67,8 @@ handleFile.addEventListener("click", async () => {
   for (const item of inn_arr) {
     if (item.length === 10) {
       await delay(1000);
-      await downloadFromEgrul(item);
+      let status = await downloadFromEgrul(item);
+      inns.value = inns.value.replace(item, item + " " + status);
     }
   }
 });
@@ -160,9 +161,14 @@ const downloadFromEgrul = async (inn) => {
       let result5 = await response5.arrayBuffer();
       fs.writeFileSync("./pdf/" + token3 + ".pdf", new Buffer(result5));
       console.log("fileName = " + token3);
-    } else console.log("HTTP error 5: " + response2.status);
+      return "downloaded: " + token3 + ".pdf";
+    } else {
+      console.log("HTTP error 5: " + response2.status);
+      return "HTTP error 5: " + response2.status;
+    }
   } catch (error) {
     console.log("error", error);
+    return "error: " + error;
   }
 };
 
