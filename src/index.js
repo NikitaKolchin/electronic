@@ -110,6 +110,7 @@ const downloadFromEgrul = async (inn) => {
       console.log("token1 = " + token1);
     } else {
       console.log("HTTP error 1: " + response1.status);
+      return "error: " + error;
     }
 
     await delay(1000);
@@ -122,7 +123,10 @@ const downloadFromEgrul = async (inn) => {
       let result2 = await response2.text();
       token2 = JSON.parse(result2)["rows"][0].t;
       console.log("token2 = " + token2);
-    } else console.log("HTTP error 2: " + response2.status);
+    } else {
+       console.log("HTTP error 2: " + response2.status);
+       return "error: " + error;
+    } 
 
     await delay(1000);
 
@@ -134,7 +138,10 @@ const downloadFromEgrul = async (inn) => {
       let result3 = await response3.text();
       token3 = JSON.parse(result3).t;
       console.log("token3 = " + token3);
-    } else console.log("HTTP error 3: " + response2.status);
+    } else {
+      console.log("HTTP error 3: " + response2.status);
+      return "error: " + error;
+    }
 
     await delay(1000);
 
@@ -148,7 +155,10 @@ const downloadFromEgrul = async (inn) => {
         let result4 = await response4.text();
         rs = JSON.parse(result4).status;
         console.log("result status = " + rs);
-      } else console.log("HTTP error 4: " + response2.status);
+      } else {
+        console.log("HTTP error 4: " + response2.status);
+        return "error: " + error;
+      } 
     }
 
     await delay(1000);
@@ -171,93 +181,3 @@ const downloadFromEgrul = async (inn) => {
     return "error: " + error;
   }
 };
-
-// const downloadFromEgrul = (inn) => {
-//   var myHeaders = new Headers();
-//   myHeaders.append("Accept", "application/json, text/javascript, */*; q=0.01");
-//   myHeaders.append("Accept-Encoding", "gzip, deflate, br");
-//   myHeaders.append("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
-//   myHeaders.append("Connection", "keep-alive");
-//   myHeaders.append("Content-Length", "75");
-//   myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-//   myHeaders.append("Host", "egrul.nalog.ru");
-//   myHeaders.append("Origin", "https://egrul.nalog.ru");
-//   myHeaders.append("Referer", "https://egrul.nalog.ru/index.html");
-
-//   var raw =
-//     "vyp3CaptchaToken=&page=&query=" +
-//     inn.value +
-//     "&region=&PreventChromeAutocomplete=";
-
-//   var requestOptions = {
-//     method: "POST",
-//     headers: myHeaders,
-//     body: raw,
-//   };
-
-//   fetch("https://egrul.nalog.ru/", requestOptions)
-//     .then((response) => response.text())
-//     .then((result) => {
-//       let token1 = JSON.parse(result).t;
-//       console.log(token1);
-//       fetch("https://egrul.nalog.ru/search-result/" + token1, { method: "GET" })
-//         .then((response) => response.text())
-//         .then((result) => {
-//           let token2 = JSON.parse(result)["rows"][0].t;
-//           console.log(token2);
-//           fetch("https://egrul.nalog.ru/vyp-request/" + token2, {
-//             method: "GET",
-//           })
-//             .then((response) => response.text())
-//             .then((result) => {
-//               let token3 = JSON.parse(result).t;
-//               let rs;
-//               console.log(token3);
-//               do {
-//                 fetch("https://egrul.nalog.ru/vyp-status/" + token3, {
-//                   method: "GET",
-//                 })
-//                   .then((response) => response.text())
-//                   .then((result_status) => {
-//                     rs = JSON.parse(result_status).status;
-//                     console.log(rs);
-//                     fetch("https://egrul.nalog.ru/vyp-download/" + token3, {
-//                       method: "GET",
-//                     })
-//                       .then((response) => response.arrayBuffer())
-//                       .then((result) =>
-//                         fs.writeFileSync(token3 + ".pdf", new Buffer(result))
-//                       )
-//                       .catch((error) => console.log("error", error));
-//                   })
-//                   .catch((error) => console.log("error", error));
-//               } while (rs === "ready");
-//             })
-//             .catch((error) => console.log("error", error));
-//         })
-//         .catch((error) => console.log("error", error));
-//     })
-//     .catch((error) => console.log("error", error));
-// };
-
-// handleFile.addEventListener("click", async () => {
-//   // If the platform is 'win32' or 'Linux'
-//   // Resolves to a Promise<Object>
-//   require("chromedriver");
-
-//   let driver = await new Builder().forBrowser("chrome").build(); //1001241307
-//   let inn_arr = inns.value.split("\n");
-//   driver.get("https://egrul.nalog.ru/index.html");
-//    inn_arr.forEach(async (element) => {
-
-//    // await (await driver.findElement(By.id('uni_text_0'))).click();
-
-//     let query = await  driver.findElement(By.name('query'))
-//     let sendKeys = await query.sendKeys(element, Key.ENTER);
-//     let wait = await driver.wait(until.elementLocated(By.className('op-excerpt')), 3000);
-//     let btn_dowload = await driver.findElement(By.className('op-excerpt'));
-//     let btn_dowload_clk = btn_dowload.click();
-//     console.log("loop"+element);
-
-//   });
-// });
