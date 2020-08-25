@@ -1,13 +1,11 @@
 const electron = require("electron");
 const ipcRenderer = require("electron").ipcRenderer;
 
-let fs = require("fs"),
-  PDFParser = require("pdf2json");
-
-let pdfParser = new PDFParser();
-
-var handleFile = document.getElementById("handle");
-var inns = document.getElementById("inns");
+let fs = require("fs");
+let fileList = [];
+const handleFile = document.getElementById("handle");
+const handlePDF = document.getElementById("pdf");
+const inns = document.getElementById("inns");
 // Defining a Global file path Variable to store
 // user-selected file
 global.filepath = undefined;
@@ -124,9 +122,9 @@ const downloadFromEgrul = async (inn) => {
       token2 = JSON.parse(result2)["rows"][0].t;
       console.log("token2 = " + token2);
     } else {
-       console.log("HTTP error 2: " + response2.status);
-       return "error: " + error;
-    } 
+      console.log("HTTP error 2: " + response2.status);
+      return "error: " + error;
+    }
 
     await delay(1000);
 
@@ -158,7 +156,7 @@ const downloadFromEgrul = async (inn) => {
       } else {
         console.log("HTTP error 4: " + response2.status);
         return "error: " + error;
-      } 
+      }
     }
 
     await delay(1000);
@@ -170,6 +168,7 @@ const downloadFromEgrul = async (inn) => {
     if (response5.ok) {
       let result5 = await response5.arrayBuffer();
       fs.writeFileSync("./pdf/" + token3 + ".pdf", new Buffer(result5));
+      fileList.push(token3);
       console.log("fileName = " + token3);
       return "downloaded: " + token3 + ".pdf";
     } else {
@@ -181,3 +180,29 @@ const downloadFromEgrul = async (inn) => {
     return "error: " + error;
   }
 };
+
+handlePDF.addEventListener("click", async () => {
+  item = '5F8DA8D56110EB8B47D9D372781B1B7F27F92726AEA5AC2444EAEF68EDB499428BC5D35E46CCA883C28D8E3CD1197F85547E69A8E36C6AEEF2DC11D73BADA47B';
+
+  const pdf = require('electron').remote.require('pdf-parse');
+ 
+  let dataBuffer = fs.readFileSync("./pdf/" + item + ".pdf");
+   
+  pdf(dataBuffer).then(function(data) {
+   
+      // number of pages
+      console.log(data.numpages);
+      // number of rendered pages
+      console.log(data.numrender);
+      // PDF info
+      console.log(data.info);
+      // PDF metadata
+      console.log(data.metadata); 
+      // PDF.js version
+      // check https://mozilla.github.io/pdf.js/getting_started/
+      console.log(data.version);
+      // PDF text
+      console.log(data.text); 
+          
+  });
+});

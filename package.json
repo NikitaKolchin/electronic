@@ -17,6 +17,6 @@
     "electron": "^9.1.0"
   },
   "dependencies": {
-    "pdf2json": "^1.2.0"
+    "pdf-parse": "^1.1.1"
   }
 }
