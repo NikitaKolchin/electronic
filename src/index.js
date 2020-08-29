@@ -182,27 +182,165 @@ const downloadFromEgrul = async (inn) => {
 };
 
 handlePDF.addEventListener("click", async () => {
-  item = '5F8DA8D56110EB8B47D9D372781B1B7F27F92726AEA5AC2444EAEF68EDB499428BC5D35E46CCA883C28D8E3CD1197F85547E69A8E36C6AEEF2DC11D73BADA47B';
+  // item =
+  //   "31884E0E5DF7EB0913A2192E8FF7A55D21EF74CD6A32DB90AEECC344AD5CC0DA038865ECC31CC9E7DABEE1E87E9BDC8C0C4A4307746B65E794AC374BD979379346B8BB9355C43432DAFC94792CB27872";
+  //item = "5F8DA8D56110EB8B47D9D372781B1B7F27F92726AEA5AC2444EAEF68EDB499428BC5D35E46CCA883C28D8E3CD1197F85547E69A8E36C6AEEF2DC11D73BADA47B";
+  item = "E239EFC0732B165CD00FA3DA47C5B67BC2E2C8431F31868E8AEEAEFCC1BF5D09E0111C93D1C05E9FEB722870E8E8958D6A7B1735A9AC68E23B9F532D7FB6FE45E3FE94A0CAE88C0EF3F66658183FE057";
+  const pdf = require("electron").remote.require("pdf-parse");
 
-  const pdf = require('electron').remote.require('pdf-parse');
- 
   let dataBuffer = fs.readFileSync("./pdf/" + item + ".pdf");
 
   const data = await pdf(dataBuffer);
- // console.log(data.text); 
-  const egrulItem = {
-    name: getFormattedText(data)
-  }
+  const text = data.text;
 
-  console.log(egrulItem.name);
-   
-  // pdf(dataBuffer).then((data) => {
-   
-  //     console.log(data.text); 
-          
-  // });
+  // console.log(data.text);
+  const egrulItem = {
+    Name: getPlaneSubstrByKeys(
+      text,
+      "Наименование",
+      "Сокращенное наименование",
+      "ГРН и дата внесения в ЕГРЮЛ записи,"
+    ),
+    INN: getPlaneSubstrByKeys(
+      text,
+      "Сведения об учете в налоговом органе",
+      "ИНН",
+      "КПП"
+    ),
+    Region: getRegion(text),
+    TerminationMethod: getPlaneSubstrByKeys(
+      text,
+      "Сведения о прекращении",
+      "Способ прекращения",
+      "Дата прекращения"
+    ), //Сведения о прекращении. Способ прекращения
+    TerminationDate: getPlaneSubstrByKeys(
+      text,
+      "Сведения о прекращении",
+      "Дата прекращения",
+      "Наименование органа, внесшего запись о"
+    ), //Сведения о прекращении. Дата прекращения
+    AdditionalInformationArr: getAdditionalInformation(text), //Сведения о недостоверности  - Дополнительная информация
+    ULStateDecision: getPlaneSubstrByKeys(
+      text,
+      "Сведения о состоянии юридического лица",
+      "Состояние",
+      "Дата принятия решения о предстоящем"
+    ), //Сведения о состоянии ЮЛ. Принято решение о прекращении
+    ULStateDecisionDate: getPlaneSubstrByKeys(
+      text,
+      "Сведения о состоянии юридического лица",
+      "Дата принятия решения о предстоящем\nисключении недействующего\nюридического лица из ЕГРЮЛ",
+      "Сведения о публикации решения о"
+    ), //Сведения о состоянии ЮЛ. Дата принятия решения
+  };
+
+  let json = JSON.stringify(egrulItem);
+  console.log(egrulItem);
 });
 
-const getFormattedText = (text) => {
-   return text.text;
+const getPlaneSubstrByKeys = (text, chapterKey, startKey, endKey) => {
+  const indexOfChapterKey = text.indexOf(chapterKey);
+  const indexOfEndOfChapterKey = indexOfChapterKey + chapterKey.length;
+  const indexOfStartKey = text.indexOf(startKey, indexOfEndOfChapterKey);
+  const indexOfEndOfStartKey = indexOfStartKey + startKey.length;
+  if (indexOfStartKey === -1 || indexOfChapterKey === -1)
+    return "Данные отсутствуют";
+  else return getPlaneSubstrByIndexes(text, indexOfEndOfStartKey, endKey);
+};
+
+const getPlaneSubstrByIndexes = (text, indexOfEndOfStartKey, endKey) => {
+  let indexOfEndKey;
+  switch (endKey) {
+    case null:
+      const indexOfTown = text.indexOf(
+        "Город (волость и т.п.)",
+        indexOfEndOfStartKey
+      );
+      const indexOfDistrict = text.indexOf(
+        "Район (улус и т.п.)",
+        indexOfEndOfStartKey
+      );
+
+      if (indexOfDistrict === -1) {
+        indexOfEndKey = indexOfTown;
+      } else if (indexOfTown === -1) {
+        indexOfEndKey = indexOfDistrict;
+      } else {
+        indexOfEndKey = indexOfDistrict;
+      }
+      break;
+    case "":
+      indexOfEndKey = indexOfEndOfStartKey + 24;
+      break;
+    default:
+      indexOfEndKey = text.indexOf(endKey, indexOfEndOfStartKey);
+  }
+  const indexOfEndOfString = text.indexOf("\n", indexOfEndKey - 4);
+  if (indexOfEndKey === -1) return "Данные отсутствуют";
+  else return text.substring(indexOfEndOfStartKey, indexOfEndOfString).trim();
+};
+
+const getRegion = (text) => {
+  const candidate = getPlaneSubstrByKeys(
+    text,
+    "Адрес (место нахождения)",
+    "Субъект Российской Федерации",
+    null
+  );
+  let region;
+  if (candidate.toUpperCase().indexOf("САРАТОВСКАЯ") !== -1) {
+    region = "ОБЛАСТЬ САРАТОВСКАЯ";
+  } else if (candidate.toUpperCase().indexOf("МАРИЙ") !== -1) {
+    region = "РЕСПУБЛИКА МАРИЙ ЭЛ";
+  } else if (candidate.toUpperCase().indexOf("ТАТАРСТАН") !== -1) {
+    region = "РЕСПУБЛИКА ТАТАРСТАН";
+  } else if (candidate.toUpperCase().indexOf("ЧУВАШ") !== -1) {
+    region = "ЧУВАШСКАЯ РЕСПУБЛИКА";
+  } else if (candidate.toUpperCase().indexOf("НИЖЕГОРОДСКАЯ") !== -1) {
+    region = "ОБЛАСТЬ НИЖЕГОРОДСКАЯ";
+  } else if (candidate.toUpperCase().indexOf("САМАРСКАЯ") !== -1) {
+    region = "ОБЛАСТЬ САМАРСКАЯ";
+  } else if (candidate.toUpperCase().indexOf("УДМУРТСКАЯ") !== -1) {
+    region = "УДМУРТСКАЯ РЕСПУБЛИКА";
+  } else if (candidate.toUpperCase().indexOf("УЛЬЯНОВСКАЯ") !== -1) {
+    region = "ОБЛАСТЬ УЛЬЯНОВСКАЯ";
+  } else if (candidate.toUpperCase().indexOf("КИРОВСКАЯ") !== -1) {
+    region = "ОБЛАСТЬ КИРОВСКАЯ";
+  } else if (candidate.toUpperCase().indexOf("ПЕНЗЕНСКАЯ") !== -1) {
+    region = "ОБЛАСТЬ ПЕНЗЕНСКАЯ";
+  } else if (candidate.toUpperCase().indexOf("МОРДОВИЯ") !== -1) {
+    region = "РЕСПУБЛИКА МОРДОВИЯ";
+  } else {
+    region = "РЕГИОН НЕ ОПРЕЛЕЛЕН";
+  }
+  return region;
+};
+
+const getAdditionalInformation = (text) => {
+  let addInf = [];
+  let matches = text.matchAll(/Дополнительные сведения/g);
+  matches = Array.from(matches);
+  matches.forEach((element) => {
+    let elementIndex = element.index + "Дополнительные сведения".length;
+    let nameOfGrnItem = getPlaneSubstrByIndexes(
+      text,
+      elementIndex,
+      "ГРН и дата внесения в ЕГРЮЛ записи,"
+    );
+    let grnIndex =
+      elementIndex +
+      nameOfGrnItem.length +
+      "ГРН и дата внесения в ЕГРЮЛ записи, \nсодержащей указанные сведения"
+        .length +
+      4;
+    let grnArr = getPlaneSubstrByIndexes(text, grnIndex, "").split("\n");
+    let grnItem = {
+      name: nameOfGrnItem,
+      grnInfo: grnArr[0],
+      grnDate: grnArr[1],
+    };
+    addInf.push(grnItem);
+  });
+  return addInf;
 };
