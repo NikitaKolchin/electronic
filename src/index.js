@@ -185,7 +185,8 @@ handlePDF.addEventListener("click", async () => {
   // item =
   //   "31884E0E5DF7EB0913A2192E8FF7A55D21EF74CD6A32DB90AEECC344AD5CC0DA038865ECC31CC9E7DABEE1E87E9BDC8C0C4A4307746B65E794AC374BD979379346B8BB9355C43432DAFC94792CB27872";
   //item = "5F8DA8D56110EB8B47D9D372781B1B7F27F92726AEA5AC2444EAEF68EDB499428BC5D35E46CCA883C28D8E3CD1197F85547E69A8E36C6AEEF2DC11D73BADA47B";
-  item = "E239EFC0732B165CD00FA3DA47C5B67BC2E2C8431F31868E8AEEAEFCC1BF5D09E0111C93D1C05E9FEB722870E8E8958D6A7B1735A9AC68E23B9F532D7FB6FE45E3FE94A0CAE88C0EF3F66658183FE057";
+  item =
+    "605EA1C4844A20348875C7482A4456020DE3DB2D039026084C65876BBD0ACAB11AB4E28D487D76C376804782A290B3553A74BD7DA7C5BCFDF113F3F18083B39C";
   const pdf = require("electron").remote.require("pdf-parse");
 
   let dataBuffer = fs.readFileSync("./pdf/" + item + ".pdf");
@@ -233,6 +234,13 @@ handlePDF.addEventListener("click", async () => {
       "Дата принятия решения о предстоящем\nисключении недействующего\nюридического лица из ЕГРЮЛ",
       "Сведения о публикации решения о"
     ), //Сведения о состоянии ЮЛ. Дата принятия решения
+    ULStateDecisionPublic: getULStateDecisionPublic(text), //Сведения о состоянии ЮЛ. Сведения о публикации решения
+    ULStateProcessInfo: getULStateProcess(text, "Info"), //Сведения о состоянии ЮЛ. Находится в стадии ликвидации
+    ULStateProcessGrnNo: getULStateProcess(text, "GrnNo"), //Сведения о состоянии ЮЛ. Номер ГРН внесения в ЕГРЮЛ
+    ULStateProcessGrnDate: getULStateProcess(text, "GrnDate"), //Сведения о состоянии ЮЛ. Дата ГРН
+    StatementGrnInfo:"",  //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
+    StatementGrnDate:"",  //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
+    UpdateDate:""
   };
 
   let json = JSON.stringify(egrulItem);
@@ -344,3 +352,106 @@ const getAdditionalInformation = (text) => {
   });
   return addInf;
 };
+
+const getULStateDecisionPublic = (text) => {
+  return (
+    getPlaneSubstrByKeys(
+      text,
+      "Сведения о состоянии юридического лица",
+      "Сведения о публикации решения о",
+      "едстоящем исключении недействующего"
+    ) +
+    (getPlaneSubstrByKeys(
+      text,
+      "Сведения о состоянии юридического лица",
+      "предстоящем исключении недействующего",
+      "идического лица из ЕГРЮЛ в журнале"
+    ) === "Данные отсутствуют"
+      ? ""
+      : getPlaneSubstrByKeys(
+          text,
+          "Сведения о состоянии юридического лица",
+          "предстоящем исключении недействующего",
+          "идического лица из ЕГРЮЛ в журнале"
+        )) +
+    (getPlaneSubstrByKeys(
+      text,
+      "Сведения о состоянии юридического лица",
+      "юридического лица из ЕГРЮЛ в журнале",
+      "естник государственной регистрации»"
+    ) === "Данные отсутствуют"
+      ? ""
+      : getPlaneSubstrByKeys(
+          text,
+          "Сведения о состоянии юридического лица",
+          "юридического лица из ЕГРЮЛ в журнале",
+          "естник государственной регистрации»"
+        )) +
+    (getPlaneSubstrByKeys(
+      text,
+      "Сведения о состоянии юридического лица",
+      "«Вестник государственной регистрации»",
+      "ГРН и дата внесения в ЕГРЮЛ записи,"
+    ) === "Данные отсутствуют"
+      ? ""
+      : getPlaneSubstrByKeys(
+          text,
+          "Сведения о состоянии юридического лица",
+          "«Вестник государственной регистрации»",
+          "ГРН и дата внесения в ЕГРЮЛ записи,"
+        ))
+  );
+};
+
+const getULStateProcess = (text, suff) => {
+  const uLStateDecision = getPlaneSubstrByKeys(
+    text,
+    "Сведения о состоянии юридического лица",
+    "Состояние",
+    "Дата принятия решения о предстоящем"
+  );
+  if (uLStateDecision !== "Данные отсутствуют") return "Данные отсутствуют";
+  let grn = getPlaneSubstrByKeys(
+    text,
+    "Сведения о состоянии юридического лица",
+    "содержащей указанные сведения",
+    ""
+  ).split("\n");
+
+  switch (suff) {
+    case "Info":
+      return getPlaneSubstrByKeys(
+        text,
+        "Сведения о состоянии юридического лица",
+        "Состояние",
+        "ГРН и дата внесения в ЕГРЮЛ записи,"
+      );
+    case "GrnNo":
+      return grn[0];
+    case "GrnDate":
+      return grn[1];
+    default:
+      return "Данные отсутствуют";
+  }
+};
+
+// private GrnInformation GetStatement()
+// {
+//     GrnInformation grnInformation;
+//     Regex regex = new Regex("Представление заявления лицом, чьи права\nи законные интересы затрагиваются в связи\nс исключением юридического лица из\nЕГРЮЛ");
+//     MatchCollection matches = regex.Matches(Text);
+//     if (matches.Count > 0)
+//     {
+//         Match match = matches[matches.Count - 1];
+//         int indexOfEndtKey = match.Index;
+//         grnInformation.name = match.Value;
+//         grnInformation.grnInfo = Text.Substring(indexOfEndtKey - 61, 13).Trim();
+//         grnInformation.grnDate = Text.Substring(indexOfEndtKey - 47, 10).Trim();  
+//     }
+//     else
+//     {
+//         grnInformation.name = grnInformation.grnInfo = grnInformation.grnDate = "Данные отсутствуют";
+//     }
+//     return grnInformation;
+
+// }
