@@ -1,3 +1,4 @@
 node_modules
 electron-app-win32-x64
 pdf
+output.json

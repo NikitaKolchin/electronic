@@ -2,7 +2,9 @@ const electron = require("electron");
 const ipcRenderer = require("electron").ipcRenderer;
 
 let fs = require("fs");
-let fileList = [];
+let fileList = []; 
+let jsonList = [];
+
 const handleFile = document.getElementById("handle");
 const handlePDF = document.getElementById("pdf");
 const inns = document.getElementById("inns");
@@ -185,66 +187,72 @@ handlePDF.addEventListener("click", async () => {
   // item =
   //   "31884E0E5DF7EB0913A2192E8FF7A55D21EF74CD6A32DB90AEECC344AD5CC0DA038865ECC31CC9E7DABEE1E87E9BDC8C0C4A4307746B65E794AC374BD979379346B8BB9355C43432DAFC94792CB27872";
   //item = "5F8DA8D56110EB8B47D9D372781B1B7F27F92726AEA5AC2444EAEF68EDB499428BC5D35E46CCA883C28D8E3CD1197F85547E69A8E36C6AEEF2DC11D73BADA47B";
-  item =
-    "605EA1C4844A20348875C7482A4456020DE3DB2D039026084C65876BBD0ACAB11AB4E28D487D76C376804782A290B3553A74BD7DA7C5BCFDF113F3F18083B39C";
-  const pdf = require("electron").remote.require("pdf-parse");
+  // item =
+  // "F9FD88FDD8A7CA26363247EE1F5A492492DAEBEF38304FD010A15A6060AA060BB70FDF0879887F6F7923A1483FC89B14DAAB28CBBF411B106665F8C484714784";
+  for (const item of fileList) {
+    const pdf = require("electron").remote.require("pdf-parse");
 
-  let dataBuffer = fs.readFileSync("./pdf/" + item + ".pdf");
-
-  const data = await pdf(dataBuffer);
-  const text = data.text;
-
-  // console.log(data.text);
-  const egrulItem = {
-    Name: getPlaneSubstrByKeys(
-      text,
-      "Наименование",
-      "Сокращенное наименование",
-      "ГРН и дата внесения в ЕГРЮЛ записи,"
-    ),
-    INN: getPlaneSubstrByKeys(
-      text,
-      "Сведения об учете в налоговом органе",
-      "ИНН",
-      "КПП"
-    ),
-    Region: getRegion(text),
-    TerminationMethod: getPlaneSubstrByKeys(
-      text,
-      "Сведения о прекращении",
-      "Способ прекращения",
-      "Дата прекращения"
-    ), //Сведения о прекращении. Способ прекращения
-    TerminationDate: getPlaneSubstrByKeys(
-      text,
-      "Сведения о прекращении",
-      "Дата прекращения",
-      "Наименование органа, внесшего запись о"
-    ), //Сведения о прекращении. Дата прекращения
-    AdditionalInformationArr: getAdditionalInformation(text), //Сведения о недостоверности  - Дополнительная информация
-    ULStateDecision: getPlaneSubstrByKeys(
-      text,
-      "Сведения о состоянии юридического лица",
-      "Состояние",
-      "Дата принятия решения о предстоящем"
-    ), //Сведения о состоянии ЮЛ. Принято решение о прекращении
-    ULStateDecisionDate: getPlaneSubstrByKeys(
-      text,
-      "Сведения о состоянии юридического лица",
-      "Дата принятия решения о предстоящем\nисключении недействующего\nюридического лица из ЕГРЮЛ",
-      "Сведения о публикации решения о"
-    ), //Сведения о состоянии ЮЛ. Дата принятия решения
-    ULStateDecisionPublic: getULStateDecisionPublic(text), //Сведения о состоянии ЮЛ. Сведения о публикации решения
-    ULStateProcessInfo: getULStateProcess(text, "Info"), //Сведения о состоянии ЮЛ. Находится в стадии ликвидации
-    ULStateProcessGrnNo: getULStateProcess(text, "GrnNo"), //Сведения о состоянии ЮЛ. Номер ГРН внесения в ЕГРЮЛ
-    ULStateProcessGrnDate: getULStateProcess(text, "GrnDate"), //Сведения о состоянии ЮЛ. Дата ГРН
-    StatementGrnInfo:"",  //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
-    StatementGrnDate:"",  //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
-    UpdateDate:""
-  };
-
-  let json = JSON.stringify(egrulItem);
-  console.log(egrulItem);
+    let dataBuffer = fs.readFileSync("./pdf/" + item + ".pdf");
+  
+    const data = await pdf(dataBuffer);
+    const text = data.text;
+  
+    // console.log(data.text);
+    const egrulItem = {
+      Name: getPlaneSubstrByKeys(
+        text,
+        "Наименование",
+        "Сокращенное наименование",
+        "ГРН и дата внесения в ЕГРЮЛ записи,"
+      ),
+      INN: getPlaneSubstrByKeys(
+        text,
+        "Сведения об учете в налоговом органе",
+        "ИНН",
+        "КПП"
+      ),
+      Region: getRegion(text),
+      TerminationMethod: getPlaneSubstrByKeys(
+        text,
+        "Сведения о прекращении",
+        "Способ прекращения",
+        "Дата прекращения"
+      ), //Сведения о прекращении. Способ прекращения
+      TerminationDate: getPlaneSubstrByKeys(
+        text,
+        "Сведения о прекращении",
+        "Дата прекращения",
+        "Наименование органа, внесшего запись о"
+      ), //Сведения о прекращении. Дата прекращения
+      AdditionalInformationArr: getAdditionalInformation(text), //Сведения о недостоверности  - Дополнительная информация
+      ULStateDecision: getPlaneSubstrByKeys(
+        text,
+        "Сведения о состоянии юридического лица",
+        "Состояние",
+        "Дата принятия решения о предстоящем"
+      ), //Сведения о состоянии ЮЛ. Принято решение о прекращении
+      ULStateDecisionDate: getPlaneSubstrByKeys(
+        text,
+        "Сведения о состоянии юридического лица",
+        "Дата принятия решения о предстоящем\nисключении недействующего\nюридического лица из ЕГРЮЛ",
+        "Сведения о публикации решения о"
+      ), //Сведения о состоянии ЮЛ. Дата принятия решения
+      ULStateDecisionPublic: getULStateDecisionPublic(text), //Сведения о состоянии ЮЛ. Сведения о публикации решения
+      ULStateProcessInfo: getULStateProcess(text, "Info"), //Сведения о состоянии ЮЛ. Находится в стадии ликвидации
+      ULStateProcessGrnNo: getULStateProcess(text, "GrnNo"), //Сведения о состоянии ЮЛ. Номер ГРН внесения в ЕГРЮЛ
+      ULStateProcessGrnDate: getULStateProcess(text, "GrnDate"), //Сведения о состоянии ЮЛ. Дата ГРН
+      StatementGrnInfo: getStatement(text).grnInfo, //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
+      StatementGrnDate: getStatement(text).grnDate, //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
+      UpdateDate: new Date(),
+    };
+  
+    jsonList.push(egrulItem);
+ //   console.log(egrulItem);
+  }
+  let json = await JSON.stringify(jsonList);
+  console.log(json);	
+  fs.writeFileSync("output.json", json);
+  
 });
 
 const getPlaneSubstrByKeys = (text, chapterKey, startKey, endKey) => {
@@ -435,6 +443,31 @@ const getULStateProcess = (text, suff) => {
   }
 };
 
+const getStatement = (text) => {
+  let matches = text.matchAll(
+    /Представление заявления лицом, чьи права\nи законные интересы затрагиваются в связи\nс исключением юридического лица из\nЕГРЮЛ/g
+  );
+  let grnItem;
+  matches = Array.from(matches);
+  if (matches.length > 0) {
+    let match = matches[matches.length - 1];
+    let indexOfEndKey = match.index;
+    grnItem = {
+      name:  match.value,
+      grnInfo: text.substring(indexOfEndKey - 59, indexOfEndKey - 46).trim(),
+      grnDate:  text.substring(indexOfEndKey - 45, indexOfEndKey - 35).trim(),
+    };
+  }
+  else {
+    grnItem = {
+      name:  "Данные отсутствуют",
+      grnInfo: "Данные отсутствуют",
+      grnDate: "Данные отсутствуют",
+    };
+  }
+
+  return grnItem;
+};
 // private GrnInformation GetStatement()
 // {
 //     GrnInformation grnInformation;
@@ -446,7 +479,7 @@ const getULStateProcess = (text, suff) => {
 //         int indexOfEndtKey = match.Index;
 //         grnInformation.name = match.Value;
 //         grnInformation.grnInfo = Text.Substring(indexOfEndtKey - 61, 13).Trim();
-//         grnInformation.grnDate = Text.Substring(indexOfEndtKey - 47, 10).Trim();  
+//         grnInformation.grnDate = Text.Substring(indexOfEndtKey - 47, 10).Trim();
 //     }
 //     else
 //     {
