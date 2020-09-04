@@ -2,7 +2,7 @@ const electron = require("electron");
 const ipcRenderer = require("electron").ipcRenderer;
 
 let fs = require("fs");
-let fileList = []; 
+let fileList = [];
 let jsonList = [];
 
 const handleFile = document.getElementById("handle");
@@ -193,10 +193,10 @@ handlePDF.addEventListener("click", async () => {
     const pdf = require("electron").remote.require("pdf-parse");
 
     let dataBuffer = fs.readFileSync("./pdf/" + item + ".pdf");
-  
+
     const data = await pdf(dataBuffer);
     const text = data.text;
-  
+
     // console.log(data.text);
     const egrulItem = {
       Name: getPlaneSubstrByKeys(
@@ -204,55 +204,54 @@ handlePDF.addEventListener("click", async () => {
         "Наименование",
         "Сокращенное наименование",
         "ГРН и дата внесения в ЕГРЮЛ записи,"
-      ),
-      INN: getPlaneSubstrByKeys(
+      ).replace(/\n/g, " "),
+      Inn: getPlaneSubstrByKeys(
         text,
         "Сведения об учете в налоговом органе",
         "ИНН",
         "КПП"
-      ),
-      Region: getRegion(text),
+      ).replace(/\n/g, " "),
+      Region: getRegion(text).replace(/\n/g, " "),
       TerminationMethod: getPlaneSubstrByKeys(
         text,
         "Сведения о прекращении",
         "Способ прекращения",
         "Дата прекращения"
-      ), //Сведения о прекращении. Способ прекращения
+      ).replace(/\n/g, " "), //Сведения о прекращении. Способ прекращения
       TerminationDate: getPlaneSubstrByKeys(
         text,
         "Сведения о прекращении",
         "Дата прекращения",
         "Наименование органа, внесшего запись о"
-      ), //Сведения о прекращении. Дата прекращения
+      ).replace(/\n/g, " "), //Сведения о прекращении. Дата прекращения
       AdditionalInformationArr: getAdditionalInformation(text), //Сведения о недостоверности  - Дополнительная информация
       ULStateDecision: getPlaneSubstrByKeys(
         text,
         "Сведения о состоянии юридического лица",
         "Состояние",
         "Дата принятия решения о предстоящем"
-      ), //Сведения о состоянии ЮЛ. Принято решение о прекращении
+      ).replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Принято решение о прекращении
       ULStateDecisionDate: getPlaneSubstrByKeys(
         text,
         "Сведения о состоянии юридического лица",
         "Дата принятия решения о предстоящем\nисключении недействующего\nюридического лица из ЕГРЮЛ",
         "Сведения о публикации решения о"
-      ), //Сведения о состоянии ЮЛ. Дата принятия решения
-      ULStateDecisionPublic: getULStateDecisionPublic(text), //Сведения о состоянии ЮЛ. Сведения о публикации решения
-      ULStateProcessInfo: getULStateProcess(text, "Info"), //Сведения о состоянии ЮЛ. Находится в стадии ликвидации
-      ULStateProcessGrnNo: getULStateProcess(text, "GrnNo"), //Сведения о состоянии ЮЛ. Номер ГРН внесения в ЕГРЮЛ
-      ULStateProcessGrnDate: getULStateProcess(text, "GrnDate"), //Сведения о состоянии ЮЛ. Дата ГРН
-      StatementGrnInfo: getStatement(text).grnInfo, //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
-      StatementGrnDate: getStatement(text).grnDate, //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
-      UpdateDate: new Date(),
+      ).replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Дата принятия решения
+      ULStateDecisionPublic: getULStateDecisionPublic(text).replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Сведения о публикации решения
+      ULStateProcessInfo: getULStateProcess(text, "Info").replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Находится в стадии ликвидации
+      ULStateProcessGrnNo: getULStateProcess(text, "GrnNo").replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Номер ГРН внесения в ЕГРЮЛ
+      ULStateProcessGrnDate: getULStateProcess(text, "GrnDate").replace(/\n/g," "), //Сведения о состоянии ЮЛ. Дата ГРН
+      StatementGrnInfo: getStatement(text).grnInfo.replace(/\n/g, " "), //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
+      StatementGrnDate: getStatement(text).grnDate.replace(/\n/g, " "), //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
+      UpdateDate: formatDate(new Date()),
     };
-  
+
     jsonList.push(egrulItem);
- //   console.log(egrulItem);
+    //   console.log(egrulItem);
   }
   let json = await JSON.stringify(jsonList);
-  console.log(json);	
+  console.log(json);
   fs.writeFileSync("output.json", json);
-  
 });
 
 const getPlaneSubstrByKeys = (text, chapterKey, startKey, endKey) => {
@@ -343,7 +342,7 @@ const getAdditionalInformation = (text) => {
       text,
       elementIndex,
       "ГРН и дата внесения в ЕГРЮЛ записи,"
-    );
+    ).replace(/\n/g, " ");
     let grnIndex =
       elementIndex +
       nameOfGrnItem.length +
@@ -426,21 +425,21 @@ const getULStateProcess = (text, suff) => {
     ""
   ).split("\n");
 
-  switch (suff) {
-    case "Info":
-      return getPlaneSubstrByKeys(
-        text,
-        "Сведения о состоянии юридического лица",
-        "Состояние",
-        "ГРН и дата внесения в ЕГРЮЛ записи,"
-      );
-    case "GrnNo":
-      return grn[0];
-    case "GrnDate":
-      return grn[1];
-    default:
-      return "Данные отсутствуют";
-  }
+  if (grn.length > 1) {
+    switch (suff) {
+      case "Info":
+        return getPlaneSubstrByKeys(
+          text,
+          "Сведения о состоянии юридического лица",
+          "Состояние",
+          "ГРН и дата внесения в ЕГРЮЛ записи,"
+        );
+      case "GrnNo":
+        return grn[0];
+      case "GrnDate":
+        return grn[1];
+    }
+  } else return "Данные отсутствуют";
 };
 
 const getStatement = (text) => {
@@ -453,14 +452,13 @@ const getStatement = (text) => {
     let match = matches[matches.length - 1];
     let indexOfEndKey = match.index;
     grnItem = {
-      name:  match.value,
+      name: match.value,
       grnInfo: text.substring(indexOfEndKey - 59, indexOfEndKey - 46).trim(),
-      grnDate:  text.substring(indexOfEndKey - 45, indexOfEndKey - 35).trim(),
+      grnDate: text.substring(indexOfEndKey - 45, indexOfEndKey - 35).trim(),
     };
-  }
-  else {
+  } else {
     grnItem = {
-      name:  "Данные отсутствуют",
+      name: "Данные отсутствуют",
       grnInfo: "Данные отсутствуют",
       grnDate: "Данные отсутствуют",
     };
@@ -468,6 +466,17 @@ const getStatement = (text) => {
 
   return grnItem;
 };
+
+function formatDate(d) {
+  var month = "" + (d.getMonth() + 1),
+    day = "" + d.getDate(),
+    year = d.getFullYear();
+
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
+
+  return [day, month, year].join(".");
+}
 // private GrnInformation GetStatement()
 // {
 //     GrnInformation grnInformation;
