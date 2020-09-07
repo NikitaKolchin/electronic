@@ -210,7 +210,7 @@ handlePDF.addEventListener("click", async () => {
         "Сведения об учете в налоговом органе",
         "ИНН",
         "КПП"
-      ).replace(/\n/g, " "),
+      ).replace(/\n/g, " ").substring(0,10),
       Region: getRegion(text).replace(/\n/g, " "),
       TerminationMethod: getPlaneSubstrByKeys(
         text,
@@ -240,7 +240,10 @@ handlePDF.addEventListener("click", async () => {
       ULStateDecisionPublic: getULStateDecisionPublic(text).replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Сведения о публикации решения
       ULStateProcessInfo: getULStateProcess(text, "Info").replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Находится в стадии ликвидации
       ULStateProcessGrnNo: getULStateProcess(text, "GrnNo").replace(/\n/g, " "), //Сведения о состоянии ЮЛ. Номер ГРН внесения в ЕГРЮЛ
-      ULStateProcessGrnDate: getULStateProcess(text, "GrnDate").replace(/\n/g," "), //Сведения о состоянии ЮЛ. Дата ГРН
+      ULStateProcessGrnDate: getULStateProcess(text, "GrnDate").replace(
+        /\n/g,
+        " "
+      ), //Сведения о состоянии ЮЛ. Дата ГРН
       StatementGrnInfo: getStatement(text).grnInfo.replace(/\n/g, " "), //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
       StatementGrnDate: getStatement(text).grnDate.replace(/\n/g, " "), //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
       UpdateDate: formatDate(new Date()),
@@ -251,7 +254,10 @@ handlePDF.addEventListener("click", async () => {
   }
   let json = await JSON.stringify(jsonList);
   console.log(json);
-  fs.writeFileSync("output.json", json);
+  fs.writeFile("output.json", json, (error) => {
+    if (error) throw error; // если возникла ошибка
+    alert("запись файла завершена");
+  });
 });
 
 const getPlaneSubstrByKeys = (text, chapterKey, startKey, endKey) => {
