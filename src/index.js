@@ -1,6 +1,6 @@
 const electron = require("electron");
 const ipcRenderer = require("electron").ipcRenderer;
-
+let crypto = require("crypto");
 let fs = require("fs");
 let fileList = [];
 let jsonList = [];
@@ -169,10 +169,13 @@ const downloadFromEgrul = async (inn) => {
     );
     if (response5.ok) {
       let result5 = await response5.arrayBuffer();
-      fs.writeFileSync("./pdf/" + token3 + ".pdf", new Buffer(result5));
-      fileList.push(token3);
-      console.log("fileName = " + token3);
-      return "downloaded: " + token3 + ".pdf";
+      let fileName = crypto.createHash("md5").update(token3).digest("hex");
+      makeDirIfNotExist("./pdf/");
+      makeDirIfNotExist("./output/"); 
+      fs.writeFileSync("./pdf/" + fileName + ".pdf", new Buffer(result5));
+      fileList.push(fileName);
+      console.log("fileName = " + fileName);
+      return "downloaded: " + fileName + ".pdf";
     } else {
       console.log("HTTP error 5: " + response2.status);
       return "HTTP error 5: " + response2.status;
@@ -184,11 +187,6 @@ const downloadFromEgrul = async (inn) => {
 };
 
 handlePDF.addEventListener("click", async () => {
-  // item =
-  //   "31884E0E5DF7EB0913A2192E8FF7A55D21EF74CD6A32DB90AEECC344AD5CC0DA038865ECC31CC9E7DABEE1E87E9BDC8C0C4A4307746B65E794AC374BD979379346B8BB9355C43432DAFC94792CB27872";
-  //item = "5F8DA8D56110EB8B47D9D372781B1B7F27F92726AEA5AC2444EAEF68EDB499428BC5D35E46CCA883C28D8E3CD1197F85547E69A8E36C6AEEF2DC11D73BADA47B";
-  // item =
-  // "F9FD88FDD8A7CA26363247EE1F5A492492DAEBEF38304FD010A15A6060AA060BB70FDF0879887F6F7923A1483FC89B14DAAB28CBBF411B106665F8C484714784";
   for (const item of fileList) {
     const pdf = require("electron").remote.require("pdf-parse");
 
@@ -210,7 +208,9 @@ handlePDF.addEventListener("click", async () => {
         "Сведения об учете в налоговом органе",
         "ИНН",
         "КПП"
-      ).replace(/\n/g, " ").substring(0,10),
+      )
+        .replace(/\n/g, " ")
+        .substring(0, 10),
       Region: getRegion(text).replace(/\n/g, " "),
       TerminationMethod: getPlaneSubstrByKeys(
         text,
@@ -254,7 +254,7 @@ handlePDF.addEventListener("click", async () => {
   }
   let json = await JSON.stringify(jsonList);
   console.log(json);
-  fs.writeFile("output.json", json, (error) => {
+  fs.writeFile("./output/output.json", json, (error) => {
     if (error) throw error; // если возникла ошибка
     alert("запись файла завершена");
   });
@@ -483,6 +483,13 @@ function formatDate(d) {
 
   return [day, month, year].join(".");
 }
+
+const makeDirIfNotExist = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+};
+
 // private GrnInformation GetStatement()
 // {
 //     GrnInformation grnInformation;

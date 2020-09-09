@@ -27,8 +27,8 @@ let menuTemplate = [
 function createWindow () { 
   // Create the browser window. 
   win = new BrowserWindow({ 
-    width: 1200, 
-    height: 1000, 
+    width: 650, 
+    height: 800, 
     webPreferences: { 
       nodeIntegration: true
     } 
