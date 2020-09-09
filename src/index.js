@@ -7,6 +7,7 @@ let jsonList = [];
 
 const handleFile = document.getElementById("handle");
 const handlePDF = document.getElementById("pdf");
+const deletePDF = document.getElementById("delete");
 const inns = document.getElementById("inns");
 // Defining a Global file path Variable to store
 // user-selected file
@@ -187,6 +188,7 @@ const downloadFromEgrul = async (inn) => {
 };
 
 handlePDF.addEventListener("click", async () => {
+  const today = formatDate(new Date());
   for (const item of fileList) {
     const pdf = require("electron").remote.require("pdf-parse");
 
@@ -194,7 +196,6 @@ handlePDF.addEventListener("click", async () => {
 
     const data = await pdf(dataBuffer);
     const text = data.text;
-
     // console.log(data.text);
     const egrulItem = {
       Name: getPlaneSubstrByKeys(
@@ -246,7 +247,7 @@ handlePDF.addEventListener("click", async () => {
       ), //Сведения о состоянии ЮЛ. Дата ГРН
       StatementGrnInfo: getStatement(text).grnInfo.replace(/\n/g, " "), //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - номер ГРН
       StatementGrnDate: getStatement(text).grnDate.replace(/\n/g, " "), //Предоствлены документы в связи с исключением юридического лица из ЕГРЮЛ - дата ГРН
-      UpdateDate: formatDate(new Date()),
+      UpdateDate: today,
     };
 
     jsonList.push(egrulItem);
@@ -254,7 +255,7 @@ handlePDF.addEventListener("click", async () => {
   }
   let json = await JSON.stringify(jsonList);
   console.log(json);
-  fs.writeFile("./output/output.json", json, (error) => {
+  fs.writeFile("./output/output"+today+".json", json, (error) => {
     if (error) throw error; // если возникла ошибка
     alert("запись файла завершена");
   });
@@ -489,6 +490,20 @@ const makeDirIfNotExist = (dir) => {
     fs.mkdirSync(dir);
   }
 };
+
+deletePDF.addEventListener("click", async () => {
+
+  const dir = "./pdf";
+  
+  // delete directory recursively
+  fs.rmdir(dir, { recursive: true }, (err) => {
+      if (err) {
+          throw err;
+      }
+      alert(`Каталог ${dir} удалён!`);
+      console.log(`${dir} is deleted!`);
+  });
+});
 
 // private GrnInformation GetStatement()
 // {
