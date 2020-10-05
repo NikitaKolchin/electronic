@@ -48,8 +48,11 @@ ipcRenderer.on("menu", function (event, message) {
               data
             ) {
               if (!err) {
-                inns.value = data;
-                console.log("received data: " + data);
+                let inn_arr_no_unique = data.split("\r\n");
+                let uniqueSet = new Set(inn_arr_no_unique);
+                let inn_arr_unique = [... uniqueSet]; // удаление дубликатов
+                inns.value = inn_arr_unique.join("\r\n");
+                console.log("received data: " + inn_arr_unique);
               } else {
                 console.log(err);
               }
@@ -65,6 +68,8 @@ ipcRenderer.on("menu", function (event, message) {
 
 handleFile.addEventListener("click", async () => {
   let inn_arr = inns.value.split("\n");
+  // let uniqueSet = new Set(inn_arr_no_unique);
+  // let inn_arr = [... uniqueSet]; // удаление дубликатов
   for (const item of inn_arr) {
     if (item.length === 10) {
       await delay(1000);
@@ -102,7 +107,7 @@ const downloadFromEgrul = async (inn) => {
   };
 
   let token1, token2, token3, rs;
-
+  console.log("inn = "+ inn);
   try {
     let response1 = await fetch("https://egrul.nalog.ru/", requestOptions1);
     if (response1.ok) {
